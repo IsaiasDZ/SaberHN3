@@ -31,7 +31,7 @@ export default defineConfig({
     ignoreOutdatedRequests: true,
   },
   css: { transformer: "lightningcss" },
-  plugins: [
+
     plugins: [
     tanstackStart({
       router: { entry: "./src/router.tsx" }, // <-- Se añade la ruta completa con extensión .tsx

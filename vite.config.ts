@@ -7,7 +7,13 @@ export default defineConfig({
   server: {
     host: "::",
     port: 8080,
-    allowedHosts: "all", // ✅ Permite todos los hosts
+    allowedHosts: [
+      "saberhn.up.railway.app",  // ✅ Tu dominio correcto
+      "localhost",
+      "127.0.0.1",
+      "::1",
+      ".railway.app",  // ✅ Permite cualquier subdominio de railway.app
+    ],
   },
   resolve: {
     alias: { "@": `${process.cwd()}/src` },

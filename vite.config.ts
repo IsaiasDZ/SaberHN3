@@ -45,7 +45,7 @@ export default defineConfig({
       transformer: "lightningcss" 
     },
 
-    // Configuración de Nitro para solucionar el despliegue y Tailwind en Railway con Bun
+    // Configuración de Nitro para solucionar el despliegue y Tailwind en Railway con Bun...
     nitro: {
       preset: "bun",
       serveStatic: true,

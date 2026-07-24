@@ -32,10 +32,9 @@ export default defineConfig({
   },
   css: { transformer: "lightningcss" },
   plugins: [
+    plugins: [
     tanstackStart({
-      // 1. Le decimos dónde está el archivo del router (src/router.tsx)
-      router: { entry: "router" },
-      // 2. Le decimos dónde está el entry del server (src/server.ts)
+      router: { entry: "./src/router.tsx" }, // <-- Se añade la ruta completa con extensión .tsx
       server: { entry: "server" },
       importProtection: {
         behavior: "error",

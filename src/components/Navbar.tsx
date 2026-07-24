@@ -1,8 +1,9 @@
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { useCart } from "@/lib/cart";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut } from "lucide-react";
+import { GraduationCap, LogOut, ShoppingCart } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,12 +14,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { CartDrawer } from "@/components/CartDrawer";
 
 export function Navbar() {
   const { user, logout } = useAuth();
+  const { count } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const onDashboard = location.pathname === "/dashboard";
   return (
     <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
@@ -30,10 +34,25 @@ export function Navbar() {
           <span className="text-lg font-semibold tracking-tight">El Saber HN</span>
         </Link>
         <nav className="flex items-center gap-2">
+          <button
+            onClick={() => setCartOpen(true)}
+            className="relative grid h-9 w-9 place-items-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground"
+            aria-label="Abrir carrito"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {count > 0 && (
+              <span
+                className="absolute -right-0.5 -top-0.5 grid place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground"
+                style={{ height: 18, minWidth: 18 }}
+              >
+                {count}
+              </span>
+            )}
+          </button>
           {user ? (
             <>
               {!onDashboard && (
-                <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+                <Link to="/dashboard" className="hidden text-sm text-muted-foreground hover:text-foreground sm:inline">
                   Volver al campus
                 </Link>
               )}
@@ -43,7 +62,7 @@ export function Navbar() {
 
               <Button variant="ghost" size="sm" onClick={() => setConfirmOpen(true)}>
                 <LogOut className="mr-1 h-4 w-4" />
-                <span>Cerrar sesión</span>
+                <span className="hidden sm:inline">Cerrar sesión</span>
               </Button>
               <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
                 <AlertDialogContent>
@@ -70,6 +89,7 @@ export function Navbar() {
           )}
         </nav>
       </div>
+      <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
     </header>
   );
 }

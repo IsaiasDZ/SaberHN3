@@ -14,8 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth";
 import { useStore } from "@/lib/store";
+import { useCart } from "@/lib/cart";
 import { formatL, DEFAULT_CATEGORIES, type Course, type CourseLesson, type CourseTask } from "@/lib/courses";
-import { Plus, Trash2, Sparkles, BookOpen, GraduationCap, UserCircle2, Check, Clock, CalendarClock, Users, Star, PlayCircle, FileText, LogOut, Search, MessageSquare, Radio, Video, Pencil, Send, X, Crown, TrendingUp, Award, BarChart3, Zap } from "lucide-react";
+import { Plus, Trash2, Sparkles, BookOpen, GraduationCap, UserCircle2, Check, Clock, CalendarClock, Users, Star, PlayCircle, FileText, LogOut, Search, MessageSquare, Radio, Video, Pencil, Send, X, Crown, TrendingUp, Award, BarChart3, Zap, ShoppingCart } from "lucide-react";
 import { StudyTimeChart } from "@/components/StudyTimeChart";
 
 export const Route = createFileRoute("/dashboard")({ component: Dashboard });
@@ -67,9 +68,13 @@ function Dashboard() {
 function ExploreTab() {
   const { user } = useAuth();
   const store = useStore();
+  const cart = useCart();
   const [selected, setSelected] = useState<Course | null>(null);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("all");
+  const [toast, setToast] = useState("");
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 2200); };
 
   const all = store.allCourses();
   const categories = useMemo(() => {
@@ -112,8 +117,8 @@ function ExploreTab() {
             const enrolled = user ? store.isEnrolled(c.id, user.email) : false;
             const { avg, count } = store.averageRating(c.id);
             return (
-              <button key={c.id} type="button" onClick={() => setSelected(c)} className="group text-left">
-                <Card className="h-full overflow-hidden transition group-hover:shadow-md group-hover:-translate-y-0.5">
+              <div key={c.id} className="group flex flex-col">
+                <Card className="flex h-full flex-col overflow-hidden transition group-hover:shadow-md group-hover:-translate-y-0.5">
                   <div className="relative h-32 bg-cover bg-center" style={{ backgroundImage: `url(${c.image})` }}>
                     {c.featured && !c.builtin && (
                       <span className="absolute left-2 top-2 rounded-full bg-amber-400 px-2 py-0.5 text-xs font-bold text-amber-950 shadow">Destacado</span>
@@ -142,20 +147,37 @@ function ExploreTab() {
                         {c.flexible ? "Horarios flexibles" : c.schedule}
                       </span>
                     </div>
-                    <div className="mt-4 flex items-center justify-between">
+                    <div className="mt-4 flex items-center justify-between gap-2">
                       <span className="text-lg font-bold text-primary">{formatL(c.price)}</span>
-                      <span className="text-xs font-medium text-primary">
-                        {enrolled ? "Inscrito ✓" : "Ver detalles →"}
-                      </span>
+                      {enrolled ? (
+                        <span className="text-xs font-medium text-green-600">Inscrito ✓</span>
+                      ) : cart.has(c.id) ? (
+                        <span className="text-xs font-medium text-primary">En el carrito ✓</span>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={(e) => { e.stopPropagation(); cart.add(c); showToast(`"${c.title}" agregado al carrito`); }}
+                        >
+                          <ShoppingCart className="mr-1.5 h-3.5 w-3.5" /> Agregar
+                        </Button>
+                      )}
                     </div>
+                    <Button variant="ghost" size="sm" className="mt-2 w-full" onClick={() => setSelected(c)}>
+                      Ver detalles →
+                    </Button>
                   </CardContent>
                 </Card>
-              </button>
+              </div>
             );
           })}
         </div>
       )}
       <CourseDialog course={selected} open={!!selected} onOpenChange={o => !o && setSelected(null)} />
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-lg">
+          {toast}
+        </div>
+      )}
     </>
   );
 }
@@ -204,6 +226,7 @@ function LearningTab() {
 function CourseDialog({ course, open, onOpenChange }: { course: Course | null; open: boolean; onOpenChange: (o: boolean) => void; }) {
   const { user } = useAuth();
   const store = useStore();
+  const cart = useCart();
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [commentText, setCommentText] = useState("");
   if (!course || !user) return null;
@@ -270,9 +293,16 @@ function CourseDialog({ course, open, onOpenChange }: { course: Course | null; o
               </div>
               <DialogFooter className="gap-2 sm:justify-between">
                 <span className="text-2xl font-bold text-primary">{formatL(course.price)}</span>
-                <Button onClick={() => { store.enroll(course.id, user.email); }}>
-                  Inscribirme ahora
-                </Button>
+                <div className="flex gap-2">
+                  {!cart.has(course.id) && (
+                    <Button variant="outline" onClick={() => cart.add(course)}>
+                      <ShoppingCart className="mr-1.5 h-4 w-4" /> Al carrito
+                    </Button>
+                  )}
+                  <Button onClick={() => { store.enroll(course.id, user.email); }}>
+                    Inscribirme ahora
+                  </Button>
+                </div>
               </DialogFooter>
             </div>
           ) : (

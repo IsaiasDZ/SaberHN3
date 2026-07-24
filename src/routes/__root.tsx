@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportRuntimeError } from "../lib/runtime-error-reporting";
 import { AuthProvider } from "../lib/auth";
 import { StoreProvider } from "../lib/store";
+import { CartProvider } from "../lib/cart";
 
 function NotFoundComponent() {
   return (
@@ -116,7 +117,9 @@ function RootComponent() {
   return (
     <AuthProvider>
       <StoreProvider>
-        <Outlet />
+        <CartProvider>
+          <Outlet />
+        </CartProvider>
       </StoreProvider>
     </AuthProvider>
   );

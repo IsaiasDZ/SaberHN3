@@ -9,7 +9,6 @@ export default defineConfig({
     port: 8080,
     allowedHosts: "all", // ✅ Permite todos los hosts
   },
-  },
   resolve: {
     alias: { "@": `${process.cwd()}/src` },
     dedupe: [

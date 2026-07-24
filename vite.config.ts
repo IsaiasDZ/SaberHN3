@@ -7,15 +7,8 @@ export default defineConfig({
   server: {
     host: "::",
     port: 8080,
-    // ✅ Agrega esta configuración para permitir todos los hosts en producción
-    allowedHosts: [
-      "saberhn.up.railway.app",
-      "localhost",
-      "127.0.0.1",
-      "::1",
-      // Si quieres permitir todos los hosts (menos seguro pero más fácil)
-      // "all"
-    ],
+    allowedHosts: "all", // ✅ Permite todos los hosts
+  },
   },
   resolve: {
     alias: { "@": `${process.cwd()}/src` },

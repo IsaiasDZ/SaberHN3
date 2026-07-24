@@ -9,7 +9,7 @@ export default defineConfig({
     port: 8080,
     // ✅ Agrega esta configuración para permitir todos los hosts en producción
     allowedHosts: [
-      "sabehn.up.railway.app",
+      "saberhn.up.railway.app",
       "localhost",
       "127.0.0.1",
       "::1",

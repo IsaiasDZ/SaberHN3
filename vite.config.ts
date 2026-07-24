@@ -7,6 +7,15 @@ export default defineConfig({
   server: {
     host: "::",
     port: 8080,
+    // ✅ Agrega esta configuración para permitir todos los hosts en producción
+    allowedHosts: [
+      "sabehn.up.railway.app",
+      "localhost",
+      "127.0.0.1",
+      "::1",
+      // Si quieres permitir todos los hosts (menos seguro pero más fácil)
+      // "all"
+    ],
   },
   resolve: {
     alias: { "@": `${process.cwd()}/src` },
@@ -34,11 +43,6 @@ export default defineConfig({
 
   plugins: [
     tanstackStart({
-      // Elimina esta línea o coméntala
-      // router: { entry: "./src/router.tsx" },
-      
-      // O si necesitas especificarlo, usa la ruta correcta
-      // Pero como usas el sistema de archivos, no deberías necesitarlo
       server: { entry: "server" },
       importProtection: {
         behavior: "error",

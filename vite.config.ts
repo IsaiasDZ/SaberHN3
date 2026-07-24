@@ -32,9 +32,13 @@ export default defineConfig({
   },
   css: { transformer: "lightningcss" },
 
-    plugins: [
+  plugins: [
     tanstackStart({
-      router: { entry: "./src/router.tsx" }, // <-- Se añade la ruta completa con extensión .tsx
+      // Elimina esta línea o coméntala
+      // router: { entry: "./src/router.tsx" },
+      
+      // O si necesitas especificarlo, usa la ruta correcta
+      // Pero como usas el sistema de archivos, no deberías necesitarlo
       server: { entry: "server" },
       importProtection: {
         behavior: "error",

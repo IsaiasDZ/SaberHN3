@@ -301,9 +301,9 @@ function CourseDialog({ course, open, onOpenChange }: { course: Course | null; o
                   {course.requirements.map(r => <li key={r}>{r}</li>)}
                 </ul>
               </div>
-              <DialogFooter className="gap-2 sm:justify-between">
+              <DialogFooter className="flex-col items-stretch gap-3 sm:flex-col sm:items-stretch">
                 <span className="text-2xl font-bold text-primary">{formatL(course.price)}</span>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2">
                   {!cart.has(course.id) && (
                     <Button variant="outline" onClick={() => cart.add(course)}>
                       <ShoppingCart className="mr-1.5 h-4 w-4" /> Al carrito
@@ -343,7 +343,7 @@ function CourseDialog({ course, open, onOpenChange }: { course: Course | null; o
                 ))}
               </TabsContent>
 
-              <TabsContent value="videos" className="mt-4 grid gap-3">
+              <TabsContent value="videos" className="mt-4 grid grid-cols-1 gap-3">
                 {course.lessons.map((l, i) => (
                   <div key={i} className="overflow-hidden rounded-lg border">
                     <div className="grid aspect-video place-items-center bg-muted text-primary">
@@ -758,7 +758,7 @@ function CourseEditor({ course, onClose }: { course: Course; onClose: () => void
 
   return (
     <Dialog open onOpenChange={o => !o && onClose()}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{exists ? "Editar curso" : "Nuevo curso"}</DialogTitle>
           <DialogDescription>Diseña cada apartado a tu gusto.</DialogDescription>
@@ -775,11 +775,11 @@ function CourseEditor({ course, onClose }: { course: Course; onClose: () => void
 
           <TabsContent value="info" className="mt-4 space-y-3">
             <div className="space-y-1.5"><Label>Imagen del curso</Label>
-              <div className="flex items-center gap-3">
-                <div className="h-20 w-32 rounded-md border bg-cover bg-center" style={{ backgroundImage: `url(${c.image})` }} />
-                <div className="flex-1 space-y-2">
-                  <Input value={c.image} onChange={e => set("image", e.target.value)} placeholder="URL de imagen o carga una…" />
-                  <Input type="file" accept="image/*" onChange={e => e.target.files?.[0] && handleImage(e.target.files[0])} />
+              <div className="flex flex-col gap-3">
+                <div className="h-32 w-full rounded-lg border bg-cover bg-center" style={{ backgroundImage: `url(${c.image})` }} />
+                <div className="space-y-2">
+                  <Input value={c.image} onChange={e => set("image", e.target.value)} placeholder="URL de imagen" className="h-10 rounded-lg" />
+                  <Input type="file" accept="image/*" onChange={e => e.target.files?.[0] && handleImage(e.target.files[0])} className="h-10 rounded-lg" />
                 </div>
               </div>
             </div>
@@ -793,7 +793,7 @@ function CourseEditor({ course, onClose }: { course: Course; onClose: () => void
               <div className="space-y-1.5"><Label>Duración (horas)</Label><Input type="number" min={1} value={c.hours} onChange={e => set("hours", parseInt(e.target.value || "1", 10))} className="h-11 rounded-xl" /></div>
               <div className="space-y-1.5"><Label>Nivel de dificultad</Label>
                 <Select value={c.level} onValueChange={v => set("level", v as Course["level"])}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Principiante">Principiante</SelectItem>
                     <SelectItem value="Intermedio">Intermedio</SelectItem>
@@ -802,22 +802,24 @@ function CourseEditor({ course, onClose }: { course: Course; onClose: () => void
                 </Select>
               </div>
               <div className="space-y-1.5"><Label>Horario</Label><Input value={c.schedule} onChange={e => set("schedule", e.target.value)} className="h-11 rounded-xl" /></div>
-              <label className="flex items-center gap-2 pt-6 text-sm">
-                <input type="checkbox" checked={c.flexible} onChange={e => set("flexible", e.target.checked)} /> Horarios flexibles
+              <label className="flex items-center gap-2 pt-2 text-sm">
+                <input type="checkbox" checked={c.flexible} onChange={e => set("flexible", e.target.checked)} className="h-4 w-4" /> Horarios flexibles
               </label>
               <div className="space-y-1.5"><Label>Idioma</Label><Input value={c.language} onChange={e => set("language", e.target.value)} className="h-11 rounded-xl" /></div>
             </div>
             <div className="space-y-1.5"><Label>Descripción corta</Label><Input value={c.description} onChange={e => set("description", e.target.value)} maxLength={140} className="h-11 rounded-xl" /></div>
-            <div className="space-y-1.5"><Label>Descripción larga</Label><Textarea rows={3} value={c.longDescription} onChange={e => set("longDescription", e.target.value)} maxLength={500} /></div>
-            <div className="space-y-1.5"><Label>Bio del instructor</Label><Textarea rows={2} value={c.instructorBio} onChange={e => set("instructorBio", e.target.value)} maxLength={200} /></div>
+            <div className="space-y-1.5"><Label>Descripción larga</Label><Textarea rows={3} value={c.longDescription} onChange={e => set("longDescription", e.target.value)} maxLength={500} className="rounded-lg" /></div>
+            <div className="space-y-1.5"><Label>Bio del instructor</Label><Textarea rows={2} value={c.instructorBio} onChange={e => set("instructorBio", e.target.value)} maxLength={200} className="rounded-lg" /></div>
           </TabsContent>
 
           <TabsContent value="content" className="mt-4 space-y-2">
             {c.lessons.map((l, i) => (
-              <div key={i} className="grid grid-cols-[1fr_auto] gap-2 rounded-lg border p-2">
-                <Input value={l.title} onChange={e => updLesson(i, { title: e.target.value })} placeholder="Título de la lección" className="h-10 rounded-lg" />
-                <Input value={l.duration} onChange={e => updLesson(i, { duration: e.target.value })} placeholder="20 min" className="h-10 w-20 rounded-lg" />
-                <Button size="icon" variant="ghost" onClick={() => delLesson(i)}><X className="h-4 w-4" /></Button>
+              <div key={i} className="space-y-2 rounded-lg border p-2">
+                <div className="flex gap-2">
+                  <Input value={l.title} onChange={e => updLesson(i, { title: e.target.value })} placeholder="Título de la lección" className="h-10 rounded-lg" />
+                  <Button size="icon" variant="ghost" className="shrink-0" onClick={() => delLesson(i)}><X className="h-4 w-4" /></Button>
+                </div>
+                <Input value={l.duration} onChange={e => updLesson(i, { duration: e.target.value })} placeholder="Duración: 20 min" className="h-10 rounded-lg" />
               </div>
             ))}
             <Button size="sm" variant="outline" onClick={addLesson}><Plus className="mr-1 h-3 w-3" />Añadir lección</Button>
@@ -837,12 +839,12 @@ function CourseEditor({ course, onClose }: { course: Course; onClose: () => void
           <TabsContent value="tasks" className="mt-4 space-y-3">
             {c.tasks.map((t, i) => (
               <div key={i} className="space-y-2 rounded-lg border p-3">
-                <div className="flex gap-2">
-                  <Input value={t.title} onChange={e => updTask(i, { title: e.target.value })} placeholder="Título" />
-                  <Input type="number" min={1} value={t.dueInDays} onChange={e => updTask(i, { dueInDays: parseInt(e.target.value || "1", 10) })} className="w-24" />
-                  <Button size="icon" variant="ghost" onClick={() => delTask(i)}><X className="h-4 w-4" /></Button>
+                <div className="flex items-start gap-2">
+                  <Input value={t.title} onChange={e => updTask(i, { title: e.target.value })} placeholder="Título" className="h-10 rounded-lg" />
+                  <Button size="icon" variant="ghost" className="shrink-0" onClick={() => delTask(i)}><X className="h-4 w-4" /></Button>
                 </div>
-                <Textarea rows={2} value={t.description} onChange={e => updTask(i, { description: e.target.value })} placeholder="Descripción" />
+                <Input type="number" min={1} value={t.dueInDays} onChange={e => updTask(i, { dueInDays: parseInt(e.target.value || '1', 10) })} placeholder="Días para entregar" className="h-10 rounded-lg" />
+                <Textarea rows={2} value={t.description} onChange={e => updTask(i, { description: e.target.value })} placeholder="Descripción" className="rounded-lg" />
               </div>
             ))}
             <Button size="sm" variant="outline" onClick={addTask}><Plus className="mr-1 h-3 w-3" />Añadir tarea</Button>
@@ -854,9 +856,9 @@ function CourseEditor({ course, onClose }: { course: Course; onClose: () => void
           </TabsContent>
         </Tabs>
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button onClick={save}><Check className="mr-2 h-4 w-4" />{exists ? "Guardar cambios" : "Publicar curso"}</Button>
+        <DialogFooter className="flex-col gap-2 sm:flex-col">
+          <Button variant="ghost" onClick={onClose} className="w-full">Cancelar</Button>
+          <Button onClick={save} className="w-full"><Check className="mr-2 h-4 w-4" />{exists ? "Guardar cambios" : "Publicar curso"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

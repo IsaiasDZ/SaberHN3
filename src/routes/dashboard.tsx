@@ -1,12 +1,11 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Navbar } from "@/components/Navbar";
+import { MobileTabBar, MobileTopBar, type TabKey } from "@/components/MobileTabBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -16,7 +15,7 @@ import { useAuth } from "@/lib/auth";
 import { useStore } from "@/lib/store";
 import { useCart } from "@/lib/cart";
 import { formatL, DEFAULT_CATEGORIES, type Course, type CourseLesson, type CourseTask } from "@/lib/courses";
-import { Plus, Trash2, Sparkles, BookOpen, GraduationCap, UserCircle2, Check, Clock, CalendarClock, Users, Star, PlayCircle, FileText, LogOut, Search, MessageSquare, Radio, Video, Pencil, Send, X, Crown, TrendingUp, Award, BarChart3, Zap, ShoppingCart } from "lucide-react";
+import { Plus, Trash2, Sparkles, BookOpen, GraduationCap, UserCircle2, Check, Clock, CalendarClock, Users, Star, PlayCircle, FileText, LogOut, Search, MessageSquare, Radio, Video, Pencil, Send, X, Crown, TrendingUp, Award, BarChart3, Zap, ShoppingCart, ChevronLeft } from "lucide-react";
 import { StudyTimeChart } from "@/components/StudyTimeChart";
 
 export const Route = createFileRoute("/dashboard")({ component: Dashboard });
@@ -24,43 +23,34 @@ export const Route = createFileRoute("/dashboard")({ component: Dashboard });
 function Dashboard() {
   const { user } = useAuth();
   const { upsertProfile } = useStore();
+  const [tab, setTab] = useState<TabKey>("explore");
   useEffect(() => {
     if (user) upsertProfile({ email: user.email, fullName: user.fullName, age: user.age, role: user.role });
   }, [user, upsertProfile]);
 
   if (!user) return <Navigate to="/login" />;
   const isInstructor = user.role === "instructor" || user.role === "instructor_pro";
+  const roleLabel = user.role === "instructor_pro" ? "Instructor Pro" : user.role === "instructor" ? "Instructor" : "Estudiante";
+
+  const titles: Record<TabKey, { t: string; s: string }> = {
+    explore: { t: `Hola, ${user.fullName.split(" ")[0]}`, s: "Explora nuevos cursos" },
+    learning: { t: "Mis aprendizajes", s: "Continúa donde lo dejaste" },
+    teach: { t: "Mi espacio", s: "Gestiona tus cursos" },
+    plans: { t: "Planes", s: "Compara y mejora" },
+    profile: { t: "Mi perfil", s: roleLabel },
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
-          <div className="min-w-0">
-            <h1 className="truncate text-2xl font-bold sm:text-3xl">Hola, {user.fullName.split(" ")[0]} 👋</h1>
-            <p className="text-sm text-muted-foreground">Continúa tu camino de aprendizaje.</p>
-          </div>
-          <Badge variant="secondary" className="shrink-0">
-            {user.role === "instructor_pro" ? "Instructor Pro" : user.role === "instructor" ? "Instructor" : "Estudiante"}
-          </Badge>
-        </header>
-
-        <Tabs defaultValue="explore" className="mt-8">
-          <TabsList className="w-full justify-start overflow-x-auto">
-            <TabsTrigger value="explore"><BookOpen className="mr-2 h-4 w-4" />Explorar cursos</TabsTrigger>
-            <TabsTrigger value="learning"><GraduationCap className="mr-2 h-4 w-4" />Mis aprendizajes</TabsTrigger>
-            {isInstructor && <TabsTrigger value="teach"><Sparkles className="mr-2 h-4 w-4" />Mi espacio</TabsTrigger>}
-            {isInstructor && <TabsTrigger value="plans"><Crown className="mr-2 h-4 w-4" />Planes</TabsTrigger>}
-            <TabsTrigger value="profile"><UserCircle2 className="mr-2 h-4 w-4" />Mi perfil</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="explore" className="mt-6"><ExploreTab /></TabsContent>
-          <TabsContent value="learning" className="mt-6"><LearningTab /></TabsContent>
-          {isInstructor && <TabsContent value="teach" className="mt-6"><TeachTab /></TabsContent>}
-          {isInstructor && <TabsContent value="plans" className="mt-6"><PlansTab /></TabsContent>}
-          <TabsContent value="profile" className="mt-6"><ProfileTab /></TabsContent>
-        </Tabs>
-      </div>
+    <div className="app-shell flex flex-col">
+      <MobileTopBar title={titles[tab].t} subtitle={titles[tab].s} onHome={() => setTab("explore")} />
+      <main className="flex-1 overflow-y-auto px-4 pb-28 pt-4">
+        {tab === "explore" && <ExploreTab />}
+        {tab === "learning" && <LearningTab />}
+        {tab === "teach" && isInstructor && <TeachTab />}
+        {tab === "plans" && isInstructor && <PlansTab />}
+        {tab === "profile" && <ProfileTab />}
+      </main>
+      <MobileTabBar active={tab} onChange={setTab} isInstructor={isInstructor} />
     </div>
   );
 }
@@ -93,18 +83,29 @@ function ExploreTab() {
 
   return (
     <>
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar curso o instructor…" className="pl-9" />
-        </div>
-        <Select value={cat} onValueChange={setCat}>
-          <SelectTrigger className="sm:w-56"><SelectValue placeholder="Categoría" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas las categorías</SelectItem>
-            {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-          </SelectContent>
-        </Select>
+      {/* Search bar */}
+      <div className="relative mb-3">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar curso o instructor…" className="h-11 rounded-xl pl-9" />
+      </div>
+
+      {/* Category chips — horizontal scroll */}
+      <div className="no-scrollbar mb-4 flex gap-2 overflow-x-auto pb-1">
+        <button
+          onClick={() => setCat("all")}
+          className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition ${cat === "all" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
+        >
+          Todas
+        </button>
+        {categories.map(c => (
+          <button
+            key={c}
+            onClick={() => setCat(c)}
+            className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition ${cat === c ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
+          >
+            {c}
+          </button>
+        ))}
       </div>
 
       {filtered.length === 0 ? (
@@ -112,69 +113,65 @@ function ExploreTab() {
           No encontramos cursos con esos filtros.
         </div>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4">
           {filtered.map(c => {
             const enrolled = user ? store.isEnrolled(c.id, user.email) : false;
             const { avg, count } = store.averageRating(c.id);
             return (
-              <div key={c.id} className="group flex flex-col">
-                <Card className="flex h-full flex-col overflow-hidden transition group-hover:shadow-md group-hover:-translate-y-0.5">
-                  <div className="relative h-32 bg-cover bg-center" style={{ backgroundImage: `url(${c.image})` }}>
-                    {c.featured && !c.builtin && (
-                      <span className="absolute left-2 top-2 rounded-full bg-amber-400 px-2 py-0.5 text-xs font-bold text-amber-950 shadow">Destacado</span>
-                    )}
-                    {!c.featured && !c.builtin && (
-                      <span className="absolute left-2 top-2 rounded-full bg-blue-500 px-2 py-0.5 text-xs font-bold text-white shadow">Nuevo</span>
+              <Card key={c.id} className="overflow-hidden transition active:scale-[0.98]" onClick={() => setSelected(c)}>
+                <div className="relative h-36 bg-cover bg-center" style={{ backgroundImage: `url(${c.image})` }}>
+                  {c.featured && !c.builtin && (
+                    <span className="absolute left-2 top-2 rounded-full bg-amber-400 px-2 py-0.5 text-xs font-bold text-amber-950 shadow">Destacado</span>
+                  )}
+                  {!c.featured && !c.builtin && (
+                    <span className="absolute left-2 top-2 rounded-full bg-blue-500 px-2 py-0.5 text-xs font-bold text-white shadow">Nuevo</span>
+                  )}
+                </div>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">{c.category} · {c.level}</p>
+                    {(avg > 0 || c.rating) && (
+                      <span className="flex items-center gap-1 text-xs font-medium text-amber-600">
+                        <Star className="h-3 w-3 fill-current" />{avg > 0 ? avg.toFixed(1) : c.rating}
+                        {count > 0 && <span className="text-muted-foreground">({count})</span>}
+                      </span>
                     )}
                   </div>
-                  <CardContent className="p-5">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-muted-foreground">{c.category} · {c.level}</p>
-                      {(avg > 0 || c.rating) && (
-                        <span className="flex items-center gap-1 text-xs font-medium text-amber-600">
-                          <Star className="h-3 w-3 fill-current" />{avg > 0 ? avg.toFixed(1) : c.rating}
-                          {count > 0 && <span className="text-muted-foreground">({count})</span>}
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="mt-1 font-semibold">{c.title}</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">Por {c.instructor}</p>
-                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{c.description}</p>
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                      <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />{c.hours} h</span>
-                      <span className="inline-flex items-center gap-1">
-                        <CalendarClock className="h-3 w-3" />
-                        {c.flexible ? "Horarios flexibles" : c.schedule}
-                      </span>
-                    </div>
-                    <div className="mt-4 flex items-center justify-between gap-2">
-                      <span className="text-lg font-bold text-primary">{formatL(c.price)}</span>
-                      {enrolled ? (
-                        <span className="text-xs font-medium text-green-600">Inscrito ✓</span>
-                      ) : cart.has(c.id) ? (
-                        <span className="text-xs font-medium text-primary">En el carrito ✓</span>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={(e) => { e.stopPropagation(); cart.add(c); showToast(`"${c.title}" agregado al carrito`); }}
-                        >
-                          <ShoppingCart className="mr-1.5 h-3.5 w-3.5" /> Agregar
-                        </Button>
-                      )}
-                    </div>
-                    <Button variant="ghost" size="sm" className="mt-2 w-full" onClick={() => setSelected(c)}>
-                      Ver detalles →
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
+                  <h3 className="mt-1 font-semibold leading-tight">{c.title}</h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">Por {c.instructor}</p>
+                  <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{c.description}</p>
+                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />{c.hours} h</span>
+                    <span className="inline-flex items-center gap-1">
+                      <CalendarClock className="h-3 w-3" />
+                      {c.flexible ? "Flexible" : c.schedule}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <span className="text-lg font-bold text-primary">{formatL(c.price)}</span>
+                    {enrolled ? (
+                      <span className="text-xs font-medium text-green-600">Inscrito ✓</span>
+                    ) : cart.has(c.id) ? (
+                      <span className="text-xs font-medium text-primary">En el carrito ✓</span>
+                    ) : (
+                      <Button
+                        size="sm"
+                        className="rounded-lg"
+                        onClick={(e) => { e.stopPropagation(); cart.add(c); showToast(`"${c.title}" agregado al carrito`); }}
+                      >
+                        <ShoppingCart className="mr-1 h-3.5 w-3.5" /> Agregar
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             );
           })}
         </div>
       )}
       <CourseDialog course={selected} open={!!selected} onOpenChange={o => !o && setSelected(null)} />
       {toast && (
-        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-lg">
+        <div className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-lg">
           {toast}
         </div>
       )}
@@ -199,21 +196,22 @@ function LearningTab() {
   }
   return (
     <>
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         {mine.map(c => (
-          <Card key={c.id}>
-            <CardContent className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 p-4">
-              <div className="h-14 w-14 shrink-0 rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${c.image})` }} />
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">{c.category} · {c.flexible ? "Horarios flexibles" : c.schedule}</p>
-                <p className="truncate font-semibold">{c.title}</p>
+          <Card key={c.id} className="overflow-hidden transition active:scale-[0.98]" onClick={() => setSelected(c)}>
+            <CardContent className="flex items-center gap-3 p-3">
+              <div className="h-16 w-16 shrink-0 rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${c.image})` }} />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground">{c.category}</p>
+                <p className="truncate font-semibold leading-tight">{c.title}</p>
+                <p className="truncate text-xs text-muted-foreground">{c.flexible ? "Horarios flexibles" : c.schedule}</p>
                 {store.live[c.id]?.active && (
                   <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-red-600">
-                    <Radio className="h-3 w-3 animate-pulse" /> Clase en vivo ahora
+                    <Radio className="h-3 w-3 animate-pulse" /> En vivo ahora
                   </span>
                 )}
               </div>
-              <Button size="sm" variant="outline" onClick={() => setSelected(c)}>Continuar</Button>
+              <ChevronLeft className="h-5 w-5 shrink-0 rotate-180 text-muted-foreground" />
             </CardContent>
           </Card>
         ))}
@@ -251,8 +249,8 @@ function CourseDialog({ course, open, onOpenChange }: { course: Course | null; o
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-          <div className="-m-6 mb-0 h-40 rounded-t-lg bg-cover bg-center" style={{ backgroundImage: `url(${course.image})` }} />
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+          <div className="-m-6 mb-0 h-36 rounded-t-lg bg-cover bg-center" style={{ backgroundImage: `url(${course.image})` }} />
           <DialogHeader>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary">{course.category}</Badge>
@@ -265,7 +263,7 @@ function CourseDialog({ course, open, onOpenChange }: { course: Course | null; o
             <DialogDescription>Por {course.instructor} · {course.instructorBio}</DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-2 gap-3 rounded-lg border p-3 text-sm sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 rounded-lg border p-3 text-sm">
             <InfoCell icon={<Clock className="h-4 w-4" />} label="Duración" value={`${course.hours} h`} />
             <InfoCell icon={<CalendarClock className="h-4 w-4" />} label="Horario" value={course.flexible ? "Flexible" : course.schedule} />
             <InfoCell icon={<Users className="h-4 w-4" />} label="Estudiantes" value={`${enrolledList.length || course.students}`} />
@@ -277,7 +275,7 @@ function CourseDialog({ course, open, onOpenChange }: { course: Course | null; o
               <p className="text-sm text-muted-foreground">{course.longDescription}</p>
               <div>
                 <h4 className="text-sm font-semibold">Lo que aprenderás</h4>
-                <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                <ul className="mt-2 grid gap-1.5">
                   {course.learnings.map(l => (
                     <li key={l} className="flex items-start gap-2 text-sm">
                       <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{l}
@@ -333,7 +331,7 @@ function CourseDialog({ course, open, onOpenChange }: { course: Course | null; o
                 ))}
               </TabsContent>
 
-              <TabsContent value="videos" className="mt-4 grid gap-3 sm:grid-cols-2">
+              <TabsContent value="videos" className="mt-4 grid gap-3">
                 {course.lessons.map((l, i) => (
                   <div key={i} className="overflow-hidden rounded-lg border">
                     <div className="grid aspect-video place-items-center bg-muted text-primary">
@@ -653,8 +651,8 @@ function TeachTab() {
       />
 
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Mis cursos publicados ({mine.length})</h2>
-        <Button onClick={startNew}><Plus className="mr-2 h-4 w-4" />Nuevo curso</Button>
+        <h2 className="text-base font-semibold">Mis cursos ({mine.length})</h2>
+        <Button size="sm" onClick={startNew}><Plus className="mr-1.5 h-4 w-4" />Nuevo</Button>
       </div>
 
       {mine.length === 0 ? (
@@ -662,7 +660,7 @@ function TeachTab() {
           Aún no has publicado cursos.
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3">
           {mine.map(c => {
             const students = store.enrollments[c.id]?.length ?? 0;
             const { avg, count } = store.averageRating(c.id);
@@ -773,14 +771,14 @@ function CourseEditor({ course, onClose }: { course: Course; onClose: () => void
                 </div>
               </div>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5"><Label>Título</Label><Input value={c.title} onChange={e => set("title", e.target.value)} maxLength={80} /></div>
+            <div className="grid gap-3">
+              <div className="space-y-1.5"><Label>Título</Label><Input value={c.title} onChange={e => set("title", e.target.value)} maxLength={80} className="h-11 rounded-xl" /></div>
               <div className="space-y-1.5"><Label>Categoría</Label>
-                <Input value={c.category} onChange={e => set("category", e.target.value)} maxLength={40} placeholder="Ej. Diseño" list="cats" />
+                <Input value={c.category} onChange={e => set("category", e.target.value)} maxLength={40} placeholder="Ej. Diseño" list="cats" className="h-11 rounded-xl" />
                 <datalist id="cats">{DEFAULT_CATEGORIES.map(cat => <option key={cat} value={cat} />)}</datalist>
               </div>
-              <div className="space-y-1.5"><Label>Precio (Lempiras)</Label><Input type="number" min={0} value={c.price} onChange={e => set("price", parseInt(e.target.value || "0", 10))} /></div>
-              <div className="space-y-1.5"><Label>Duración (horas)</Label><Input type="number" min={1} value={c.hours} onChange={e => set("hours", parseInt(e.target.value || "1", 10))} /></div>
+              <div className="space-y-1.5"><Label>Precio (Lempiras)</Label><Input type="number" min={0} value={c.price} onChange={e => set("price", parseInt(e.target.value || "0", 10))} className="h-11 rounded-xl" /></div>
+              <div className="space-y-1.5"><Label>Duración (horas)</Label><Input type="number" min={1} value={c.hours} onChange={e => set("hours", parseInt(e.target.value || "1", 10))} className="h-11 rounded-xl" /></div>
               <div className="space-y-1.5"><Label>Nivel de dificultad</Label>
                 <Select value={c.level} onValueChange={v => set("level", v as Course["level"])}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -791,22 +789,22 @@ function CourseEditor({ course, onClose }: { course: Course; onClose: () => void
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5"><Label>Horario</Label><Input value={c.schedule} onChange={e => set("schedule", e.target.value)} /></div>
+              <div className="space-y-1.5"><Label>Horario</Label><Input value={c.schedule} onChange={e => set("schedule", e.target.value)} className="h-11 rounded-xl" /></div>
               <label className="flex items-center gap-2 pt-6 text-sm">
                 <input type="checkbox" checked={c.flexible} onChange={e => set("flexible", e.target.checked)} /> Horarios flexibles
               </label>
-              <div className="space-y-1.5"><Label>Idioma</Label><Input value={c.language} onChange={e => set("language", e.target.value)} /></div>
+              <div className="space-y-1.5"><Label>Idioma</Label><Input value={c.language} onChange={e => set("language", e.target.value)} className="h-11 rounded-xl" /></div>
             </div>
-            <div className="space-y-1.5"><Label>Descripción corta</Label><Input value={c.description} onChange={e => set("description", e.target.value)} maxLength={140} /></div>
+            <div className="space-y-1.5"><Label>Descripción corta</Label><Input value={c.description} onChange={e => set("description", e.target.value)} maxLength={140} className="h-11 rounded-xl" /></div>
             <div className="space-y-1.5"><Label>Descripción larga</Label><Textarea rows={3} value={c.longDescription} onChange={e => set("longDescription", e.target.value)} maxLength={500} /></div>
             <div className="space-y-1.5"><Label>Bio del instructor</Label><Textarea rows={2} value={c.instructorBio} onChange={e => set("instructorBio", e.target.value)} maxLength={200} /></div>
           </TabsContent>
 
           <TabsContent value="content" className="mt-4 space-y-2">
             {c.lessons.map((l, i) => (
-              <div key={i} className="grid grid-cols-[1fr_auto_auto] gap-2 rounded-lg border p-2">
-                <Input value={l.title} onChange={e => updLesson(i, { title: e.target.value })} placeholder="Título de la lección" />
-                <Input value={l.duration} onChange={e => updLesson(i, { duration: e.target.value })} placeholder="20 min" className="w-24" />
+              <div key={i} className="grid grid-cols-[1fr_auto] gap-2 rounded-lg border p-2">
+                <Input value={l.title} onChange={e => updLesson(i, { title: e.target.value })} placeholder="Título de la lección" className="h-10 rounded-lg" />
+                <Input value={l.duration} onChange={e => updLesson(i, { duration: e.target.value })} placeholder="20 min" className="h-10 w-20 rounded-lg" />
                 <Button size="icon" variant="ghost" onClick={() => delLesson(i)}><X className="h-4 w-4" /></Button>
               </div>
             ))}
@@ -816,9 +814,9 @@ function CourseEditor({ course, onClose }: { course: Course; onClose: () => void
           <TabsContent value="videos" className="mt-4 space-y-2">
             <p className="text-xs text-muted-foreground">Añade URLs de video a cada lección.</p>
             {c.lessons.map((l, i) => (
-              <div key={i} className="grid grid-cols-[1fr_2fr] gap-2 rounded-lg border p-2">
-                <p className="truncate text-sm">{l.title}</p>
-                <Input value={l.videoUrl ?? ""} onChange={e => updLesson(i, { videoUrl: e.target.value })} placeholder="https://…" />
+              <div key={i} className="space-y-2 rounded-lg border p-2">
+                <p className="truncate text-sm font-medium">{l.title}</p>
+                <Input value={l.videoUrl ?? ""} onChange={e => updLesson(i, { videoUrl: e.target.value })} placeholder="https://…" className="h-10 rounded-lg" />
               </div>
             ))}
             {c.lessons.length === 0 && <p className="text-sm text-muted-foreground">Agrega lecciones en la pestaña Contenido.</p>}
@@ -890,7 +888,7 @@ function PlansTab() {
         <p className="mt-1 text-sm text-muted-foreground">Mira lo que ganas al pasar al plan Pro.</p>
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div className="grid gap-4">
         {/* Plan Gratis */}
         <Card className={isPro ? "opacity-60" : ""}>
           <CardContent className="p-6">
@@ -1007,8 +1005,8 @@ function ProfileTab() {
   const roleLabel = user.role === "instructor_pro" ? "Instructor Pro" : user.role === "instructor" ? "Instructor" : "Estudiante";
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
-      <Card className="lg:w-72">
+    <div className="space-y-4">
+      <Card>
         <CardContent className="flex flex-col items-center gap-3 p-6 text-center">
           <div className="grid h-20 w-20 place-items-center rounded-full text-primary" style={{ background: "var(--brand-soft)" }}>
             <UserCircle2 className="h-10 w-10" />
@@ -1022,21 +1020,17 @@ function ProfileTab() {
       </Card>
 
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-5">
           <h2 className="text-lg font-semibold">Editar mi perfil</h2>
-          <form onSubmit={submit} className="mt-5 space-y-4">
-            <div className="space-y-1.5"><Label>Correo electrónico</Label><Input value={user.email} disabled /></div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5"><Label>Nombre completo</Label><Input value={fullName} onChange={e => setFullName(e.target.value)} maxLength={60} /></div>
-              <div className="space-y-1.5"><Label>Edad</Label><Input type="number" min={10} max={100} value={age} onChange={e => setAge(e.target.value)} /></div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5"><Label>Nueva contraseña</Label><Input type="password" value={password} onChange={e => setPassword(e.target.value)} maxLength={40} placeholder="Dejar vacío para no cambiar" /></div>
-              <div className="space-y-1.5"><Label>Confirmar contraseña</Label><Input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} maxLength={40} /></div>
-            </div>
+          <form onSubmit={submit} className="mt-4 space-y-4">
+            <div className="space-y-1.5"><Label>Correo electrónico</Label><Input value={user.email} disabled className="h-11 rounded-xl" /></div>
+            <div className="space-y-1.5"><Label>Nombre completo</Label><Input value={fullName} onChange={e => setFullName(e.target.value)} maxLength={60} className="h-11 rounded-xl" /></div>
+            <div className="space-y-1.5"><Label>Edad</Label><Input type="number" min={10} max={100} value={age} onChange={e => setAge(e.target.value)} className="h-11 rounded-xl" /></div>
+            <div className="space-y-1.5"><Label>Nueva contraseña</Label><Input type="password" value={password} onChange={e => setPassword(e.target.value)} maxLength={40} placeholder="Dejar vacío para no cambiar" className="h-11 rounded-xl" /></div>
+            <div className="space-y-1.5"><Label>Confirmar contraseña</Label><Input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} maxLength={40} className="h-11 rounded-xl" /></div>
             {error && <p className="text-sm font-medium text-destructive">{error}</p>}
             {saved && <p className="flex items-center gap-1.5 text-sm font-medium text-primary"><Check className="h-4 w-4" />Perfil actualizado correctamente.</p>}
-            <Button type="submit">Guardar cambios</Button>
+            <Button type="submit" className="h-11 w-full rounded-xl">Guardar cambios</Button>
           </form>
         </CardContent>
       </Card>

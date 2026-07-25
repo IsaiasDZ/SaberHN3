@@ -26,16 +26,36 @@ interface AuthState {
 const AuthCtx = createContext<AuthState | null>(null);
 const USERS_KEY = "es_users";
 const SESSION_KEY = "es_session";
+const DEMO_SEEDED_KEY = "es_demo_seeded";
+
+const DEMO_USER: StoredUser = {
+  email: "demo@saberhn.hn",
+  fullName: "Usuario Demo",
+  age: 25,
+  role: "student",
+  password: "demo1234",
+};
 
 function readUsers(): StoredUser[] {
   try { return JSON.parse(localStorage.getItem(USERS_KEY) || "[]"); } catch { return []; }
 }
 function writeUsers(u: StoredUser[]) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
 
+function seedDemoUser() {
+  if (localStorage.getItem(DEMO_SEEDED_KEY)) return;
+  const users = readUsers();
+  if (!users.some(u => u.email.toLowerCase() === DEMO_USER.email.toLowerCase())) {
+    users.push(DEMO_USER);
+    writeUsers(users);
+  }
+  localStorage.setItem(DEMO_SEEDED_KEY, "1");
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
+    seedDemoUser();
     const s = localStorage.getItem(SESSION_KEY);
     if (s) {
       const found = readUsers().find(u => u.email === s);

@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAuth } from "@/lib/auth";
 import { useStore } from "@/lib/store";
 import { useCart } from "@/lib/cart";
@@ -22,11 +23,15 @@ export const Route = createFileRoute("/dashboard")({ component: Dashboard });
 
 function Dashboard() {
   const { user } = useAuth();
-  const { upsertProfile } = useStore();
+  const store = useStore();
   const [tab, setTab] = useState<TabKey>("explore");
+  const { email, fullName, age, role } = user ?? {};
   useEffect(() => {
-    if (user) upsertProfile({ email: user.email, fullName: user.fullName, age: user.age, role: user.role });
-  }, [user, upsertProfile]);
+    if (email && fullName && age && role) {
+      store.upsertProfile({ email, fullName, age, role });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email, fullName, age, role]);
 
   if (!user) return <Navigate to="/login" />;
   const isInstructor = user.role === "instructor" || user.role === "instructor_pro";
@@ -38,6 +43,9 @@ function Dashboard() {
     teach: { t: "Mi espacio", s: "Gestiona tus cursos" },
     plans: { t: "Planes", s: "Compara y mejora" },
     profile: { t: "Mi perfil", s: roleLabel },
+    blog: { t: "Blog", s: "Consejos e inspiración" },
+    faq: { t: "Preguntas frecuentes", s: "Resolvemos tus dudas" },
+    stories: { t: "Historias reales", s: "Testimonios de nuestra comunidad" },
   };
 
   return (
@@ -49,6 +57,9 @@ function Dashboard() {
         {tab === "teach" && isInstructor && <TeachTab />}
         {tab === "plans" && isInstructor && <PlansTab />}
         {tab === "profile" && <ProfileTab />}
+        {tab === "blog" && <BlogTab />}
+        {tab === "faq" && <FAQTab />}
+        {tab === "stories" && <StoriesTab />}
       </main>
       <MobileTabBar active={tab} onChange={setTab} isInstructor={isInstructor} />
     </div>
@@ -866,13 +877,11 @@ function PlansTab() {
     "Clases en vivo",
   ];
   const proFeatures = [
-    "Publica cursos ilimitados",
-    "Etiqueta “Destacado” en amarillo",
+    "Destaca entre los demás instructores",
     "Prioridad en búsquedas",
-    "Apareces en los primeros lugares",
-    "Estadísticas de alumnos por curso",
-    "Editor libre con imágenes personalizadas",
-    "Define tus propios precios",
+    "Videos pregrabados ilimitados",
+    "Estadísticas detalladas de alumnos",
+    "Insignia \u201CPro\u201D en tu perfil",
     "Soporte prioritario",
   ];
 
@@ -882,9 +891,9 @@ function PlansTab() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold">Compara tus planes</h2>
+        <h2 className="text-xl font-bold">Compara tus planes</h2>
         <p className="mt-1 text-sm text-muted-foreground">Mira lo que ganas al pasar al plan Pro.</p>
       </div>
 
@@ -923,7 +932,7 @@ function PlansTab() {
               <div className="grid h-10 w-10 place-items-center rounded-full bg-amber-100 text-amber-600"><Crown className="h-5 w-5" /></div>
               <div>
                 <p className="text-lg font-semibold">Instructor Pro</p>
-                <p className="text-xs text-muted-foreground">Para instructores que quieren crecer</p>
+                <p className="text-xs text-muted-foreground">Destaca entre los demás y accede a herramientas premium</p>
               </div>
             </div>
             <div className="mt-4 flex items-baseline gap-2">
@@ -1034,6 +1043,215 @@ function ProfileTab() {
           </form>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  Blog                                                                        */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+const BLOG_POSTS = [
+  {
+    id: "b1",
+    title: "5 habilidades que todo estudiante online debe dominar",
+    excerpt: "La autodisciplina, la gestión del tiempo y la organización son claves para aprender por internet. Aquí te contamos cómo desarrollarlas.",
+    date: "15 Jul 2025",
+    readTime: "5 min",
+    tag: "Educación",
+    image: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=800&q=70",
+  },
+  {
+    id: "b2",
+    title: "Cómo el inglés abre puertas en los call centers de Honduras",
+    excerpt: "El sector de call centers sigue creciendo en Honduras. Descubre por qué el inglés conversacional es la habilidad más demandada.",
+    date: "8 Jul 2025",
+    readTime: "4 min",
+    tag: "Empleabilidad",
+    image: "https://images.unsplash.com/photo-1556761175-5972dc588f6f?auto=format&fit=crop&w=800&q=70",
+  },
+  {
+    id: "b3",
+    title: "Reparación de celulares: un oficio con alta demanda",
+    excerpt: "Cada vez más personas necesitan técnicos de confianza. Conoce cómo convertirte en uno y empezar a generar ingresos.",
+    date: "1 Jul 2025",
+    readTime: "6 min",
+    tag: "Oficios",
+    image: "https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=800&q=70",
+  },
+  {
+    id: "b4",
+    title: "Marketing digital para pequeñas empresas hondureñas",
+    excerpt: "Si tienes un negocio, el marketing digital puede ayudarte a llegar a más clientes sin gastar una fortuna. Te explicamos por dónde empezar.",
+    date: "24 Jun 2025",
+    readTime: "7 min",
+    tag: "Negocios",
+    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=70",
+  },
+];
+
+function BlogTab() {
+  return (
+    <div className="space-y-4">
+      {BLOG_POSTS.map(post => (
+        <Card key={post.id} className="overflow-hidden transition active:scale-[0.98]">
+          <div className="h-36 bg-cover bg-center" style={{ backgroundImage: `url(${post.image})` }} />
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 font-medium text-primary">{post.tag}</span>
+              <span>{post.date}</span>
+              <span>·</span>
+              <span>{post.readTime} de lectura</span>
+            </div>
+            <h3 className="mt-2 font-semibold leading-tight">{post.title}</h3>
+            <p className="mt-1.5 line-clamp-3 text-sm text-muted-foreground">{post.excerpt}</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  FAQ                                                                         */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+const FAQ_ITEMS = [
+  {
+    q: "¿Cómo me inscribo a un curso?",
+    a: "Explora el catálogo en la pestaña \"Explorar\", toca un curso para ver los detalles y presiona \"Agregar\" para incluirlo en tu carrito. Luego ve al carrito y finaliza la compra para inscribirte.",
+  },
+  {
+    q: "¿Los cursos tienen horarios fijos?",
+    a: "Algunos cursos tienen horarios fijos (se muestran en la tarjeta del curso) y otros son flexibles, lo que significa que puedes avanzar a tu propio ritmo cuando tengas tiempo.",
+  },
+  {
+    q: "¿Necesito experiencia previa?",
+    a: "Cada curso indica su nivel: Principiante, Intermedio o Avanzado. Los cursos de nivel Principiante no requieren experiencia previa. Revisa los requisitos en la descripción del curso.",
+  },
+  {
+    q: "¿Cómo me convierto en instructor?",
+    a: "Al registrarte, selecciona el tipo de cuenta \"Maestro / Instructor\". Podrás crear y publicar cursos. Si quieres beneficios adicionales, activa el plan Instructor Pro por L. 250 al mes.",
+  },
+  {
+    q: "¿Qué es Instructor Pro y vale la pena?",
+    a: "Instructor Pro cuesta L. 250 al mes y te da: prioridad en búsquedas, videos pregrabados ilimitados, estadísticas detalladas de alumnos, insignia \"Pro\" en tu perfil y soporte prioritario. Es ideal si quieres enseñar profesionalmente.",
+  },
+  {
+    q: "¿Puedo cancelar mi suscripción Pro?",
+    a: "Sí, puedes cancelar cuando quieras desde la pestaña \"Planes\". Al cancelar, los beneficios Pro se desactivan al final del período pagado, pero tus cursos publicados permanecen activos.",
+  },
+  {
+    q: "¿Cómo funcionan los pagos?",
+    a: "Los pagos se procesan de forma segura a través del carrito de compras. Aceptamos tarjetas de crédito y débito. Una vez completado el pago, el curso se agrega automáticamente a \"Mis cursos\".",
+  },
+  {
+    q: "¿Qué pasa si tengo problemas técnicos?",
+    a: "Puedes escribirnos desde la pestaña de perfil. Los instructores Pro reciben soporte prioritario, pero todos los usuarios reciben respuesta en menos de 48 horas.",
+  },
+];
+
+function FAQTab() {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl bg-primary/5 p-4 text-center">
+        <p className="text-sm text-muted-foreground">
+          ¿Tienes dudas? Aquí encontrarás las respuestas a las preguntas más comunes.
+        </p>
+      </div>
+      <Accordion type="single" collapsible className="rounded-2xl border bg-card px-2">
+        {FAQ_ITEMS.map((item, i) => (
+          <AccordionItem key={i} value={`item-${i}`} className="border-b last:border-b-0">
+            <AccordionTrigger className="px-3 text-left text-sm font-semibold">
+              {item.q}
+            </AccordionTrigger>
+            <AccordionContent className="px-3 text-sm text-muted-foreground">
+              {item.a}
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  Historias reales                                                            */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+const STORIES = [
+  {
+    name: "María José Rivera",
+    age: 24,
+    city: "Tegucigalpa",
+    course: "Inglés para call centers",
+    quote: "Gracias a este curso conseguí trabajo en un call center y duplicé mi salario. La práctica con escenarios reales me dio la confianza que me faltaba.",
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=70",
+    rating: 5,
+  },
+  {
+    name: "Carlos Antonio Mendoza",
+    age: 31,
+    city: "San Pedro Sula",
+    course: "Reparación de celulares",
+    quote: "Abrí mi propio taller de reparación hace 6 meses. Lo que aprendí en el curso me dio las bases para empezar a generar ingresos por mi cuenta.",
+    image: "https://images.unsplash.com/photo-1500648766894-ccff664a183f?auto=format&fit=crop&w=400&q=70",
+    rating: 5,
+  },
+  {
+    name: "Evelyn Saavedra",
+    age: 28,
+    city: "La Ceiba",
+    course: "Diseño gráfico con Canva",
+    quote: "Ahora hago diseños para restaurantes locales. Empecé sin saber nada de diseño y hoy tengo 5 clientes fijos que me pagan cada mes.",
+    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=400&q=70",
+    rating: 5,
+  },
+  {
+    name: "José Eduardo Bonilla",
+    age: 22,
+    city: "Choluteca",
+    course: "Introducción a Python",
+    quote: "Pasé de no saber programar a conseguir una pasantía como desarrollador junior. El proyecto de la API con Flask fue lo que más me ayudó en la entrevista.",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=70",
+    rating: 5,
+  },
+];
+
+function StoriesTab() {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl bg-primary/5 p-4 text-center">
+        <p className="text-sm text-muted-foreground">
+          Historias reales de estudiantes que transformaron su vida con El Saber HN.
+        </p>
+      </div>
+      {STORIES.map((s, i) => (
+        <Card key={i} className="overflow-hidden">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <img
+                src={s.image}
+                alt={s.name}
+                className="h-14 w-14 shrink-0 rounded-full object-cover"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold leading-tight">{s.name}</p>
+                <p className="text-xs text-muted-foreground">{s.age} años · {s.city}</p>
+                <div className="mt-1 flex items-center gap-0.5">
+                  {Array.from({ length: s.rating }).map((_, idx) => (
+                    <Star key={idx} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <p className="mt-3 text-sm italic text-foreground">"{s.quote}"</p>
+            <div className="mt-3 rounded-lg bg-primary/5 px-3 py-1.5">
+              <p className="text-xs font-medium text-primary">Curso: {s.course}</p>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

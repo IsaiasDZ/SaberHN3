@@ -125,7 +125,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return { avg: scores.reduce((a, b) => a + b, 0) / scores.length, count: scores.length };
     },
     setLive: (courseId, session) => update(p => ({ ...p, live: { ...p.live, [courseId]: session } })),
-    upsertProfile: (pr) => update(p => ({ ...p, profiles: { ...p.profiles, [pr.email]: pr } })),
+    upsertProfile: (pr) => {
+      const existing = s.profiles[pr.email];
+      if (existing && existing.fullName === pr.fullName && existing.age === pr.age && existing.role === pr.role) return;
+      update(p => ({ ...p, profiles: { ...p.profiles, [pr.email]: pr } }));
+    },
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
